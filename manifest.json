@@ -1,0 +1,22 @@
+{
+  "name": "Selbstauskunft · Kockoth & Birkhold",
+  "short_name": "KB Finanzierung",
+  "description": "Selbstauskunft für Ihre Immobilienfinanzierung",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1F3C",
+  "theme_color": "#0D1F3C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230D1F3C'/%3E%3Ctext x='96' y='120' font-size='90' text-anchor='middle' fill='%23B8966A' font-family='serif'%3EK%26B%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230D1F3C'/%3E%3Ctext x='256' y='320' font-size='240' text-anchor='middle' fill='%23B8966A' font-family='serif'%3EK%26B%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

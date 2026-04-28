@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KB Finanzierung">
+<meta name="theme-color" content="#0D1F3C">
+<meta name="description" content="Selbstauskunft für Ihre Immobilienfinanzierung – Kockoth & Birkhold">
+<link rel="manifest" href="manifest.json">
+<title>Selbstauskunft · Kockoth & Birkhold</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #0D1F3C;
+  color: #0D1F3C;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ── CSS Variables ────────────────────────────────────── */
+:root {
+  --navy:    #0D1F3C;
+  --navy2:   #162d52;
+  --gold:    #B8966A;
+  --gold-l:  #D4B896;
+  --cream:   #F8F4EF;
+  --white:   #FFFFFF;
+  --muted:   #6B7280;
+  --border:  #E2D9CE;
+  --inp-bg:  #FDFBF8;
+  --error:   #C0392B;
+  --ok:      #2E7D5B;
+  --safe-t:  env(safe-area-inset-top, 0px);
+  --safe-b:  env(safe-area-inset-bottom, 0px);
+  --hdr-h:   60px;
+  --nav-h:   72px;
+  --prog-h:  48px;
+}
+
+/* ── App Shell ────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+.app-header {
+  background: var(--navy);
+  padding: calc(var(--safe-t) + 12px) 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  min-height: calc(var(--safe-t) + var(--hdr-h));
+}
+.logo-mark {
+  width: 36px; height: 36px;
+  background: rgba(184,150,106,0.2);
+  border: 1px solid rgba(184,150,106,0.4);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  color: var(--gold); font-size: 13px; font-weight: 600;
+  flex-shrink: 0;
+}
+.logo-text { margin-left: 10px; }
+.logo-name {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold); font-size: 14px; font-weight: 500;
+  line-height: 1.2;
+}
+.logo-sub {
+  color: rgba(255,255,255,0.4); font-size: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.header-badge {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  font-size: 10px; padding: 4px 10px;
+  border-radius: 20px; letter-spacing: 0.04em;
+}
+
+/* ── Progress Bar ─────────────────────────────────────── */
+.progress-wrap {
+  background: var(--navy);
+  padding: 0 20px 14px;
+  flex-shrink: 0;
+}
+.prog-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.prog-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+.prog-label.active { color: var(--gold-l); font-weight: 500; }
+.prog-label.done   { color: var(--ok); }
+.prog-track {
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-l) 100%);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Scroll Content ───────────────────────────────────── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: var(--cream);
+}
+
+/* ── Step Card ────────────────────────────────────────── */
+.step-card {
+  display: none;
+  animation: slideIn 0.3s cubic-bezier(0.4,0,0.2,1);
+  padding-bottom: 2rem;
+}
+.step-card.active { display: block; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideBack {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.step-card.back { animation: slideBack 0.3s cubic-bezier(0.4,0,0.2,1); }
+
+.step-hero {
+  background: var(--navy);
+  padding: 20px 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.step-icon {
+  width: 44px; height: 44px;
+  background: rgba(184,150,106,0.15);
+  border: 1px solid rgba(184,150,106,0.3);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.step-title {
+  font-family: 'Playfair Display', serif;
+  color: white; font-size: 20px; font-weight: 500;
+  line-height: 1.2; margin-bottom: 4px;
+}
+.step-sub { color: rgba(255,255,255,0.5); font-size: 13px; line-height: 1.5; }
+
+.step-body { padding: 20px; }
+
+/* ── Section ──────────────────────────────────────────── */
+.section-block {
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.section-title {
+  padding: 14px 16px 10px;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-fields { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ── Field ────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 12px; font-weight: 500;
+  color: var(--muted); letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 4px;
+}
+.req { color: var(--gold); font-size: 14px; line-height: 1; }
+
+.field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* tablet: wider grids */
+@media (min-width: 600px) {
+  .field-row-2 { grid-template-columns: 1fr 1fr; }
+  .field-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .step-body { padding: 24px; }
+  .section-fields { padding: 20px; gap: 16px; }
+}
+@media (max-width: 380px) {
+  .field-row-2 { grid-template-columns: 1fr; }
+  .field-row-3 { grid-template-columns: 1fr 1fr; }
+}
+
+input, select, textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px; /* prevent iOS zoom */
+  color: var(--navy);
+  background: var(--inp-bg);
+  appearance: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184,150,106,0.15);
+}
+input.error, select.error { border-color: var(--error) !important; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+textarea { resize: none; min-height: 88px; line-height: 1.5; }
+.field-err {
+  font-size: 11px; color: var(--error);
+  display: none; margin-top: -2px;
+}
+.field-hint {
+  font-size: 11px; color: var(--muted);
+  margin-top: -2px;
+}
+
+/* ── Radio Chips ──────────────────────────────────────── */
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 10px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 50px;
+  font-size: 14px; color: var(--navy);
+  cursor: pointer; user-select: none;
+  transition: all 0.15s;
+  background: var(--inp-bg);
+  display: flex; align-items: center; gap: 8px;
+}
+.chip:active { transform: scale(0.97); }
+.chip.selected {
+  border-color: var(--gold);
+  background: rgba(184,150,106,0.1);
+  font-weight: 500;
+}
+.chip-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.chip.selected .chip-dot {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+
+/* ── Info Box ─────────────────────────────────────────── */
+.info-box {
+  background: rgba(184,150,106,0.08);
+  border: 1px solid rgba(184,150,106,0.25);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.7;
+}
+
+/* ── Bottom Nav ───────────────────────────────────────── */
+.app-nav {
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px calc(var(--safe-b) + 12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 10px;
+}
+.nav-counter {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nav-counter strong { color: var(--navy); }
+.btn {
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; border: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 48px; /* touch target */
+}
+.btn:active { transform: scale(0.97); }
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  padding: 13px 18px;
+}
+.btn-primary {
+  background: var(--navy);
+  color: white;
+  flex: 1; max-width: 200px;
+}
+.btn-gold {
+  background: var(--gold);
+  color: white;
+  flex: 1; max-width: 240px;
+}
+
+/* ── Success Screen ───────────────────────────────────── */
+.success-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--cream);
+}
+.success-screen.active { display: flex; }
+.success-icon {
+  width: 80px; height: 80px;
+  background: rgba(46,125,91,0.1);
+  border: 2px solid var(--ok);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; margin-bottom: 24px;
+}
+.success-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; color: var(--navy);
+  margin-bottom: 12px;
+}
+.success-text {
+  font-size: 15px; color: var(--muted);
+  line-height: 1.7; max-width: 360px;
+  margin-bottom: 28px;
+}
+.next-steps {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: left;
+  width: 100%; max-width: 400px;
+}
+.next-steps-title {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 14px;
+}
+.next-step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; color: #374151; line-height: 1.5;
+}
+.next-step-item:last-child { border: none; }
+.step-num {
+  width: 24px; height: 24px;
+  background: var(--navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); font-size: 11px; font-weight: 500;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ── Loading overlay ──────────────────────────────────── */
+.loading-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(13,31,60,0.85);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+.loading-overlay.active { display: flex; }
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid rgba(184,150,106,0.3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: rgba(255,255,255,0.8); font-size: 14px; }
+
+/* ── Tablet layout ────────────────────────────────────── */
+@media (min-width: 600px) {
+  .scroll-area { display: flex; justify-content: center; }
+  .step-card { max-width: 640px; width: 100%; }
+  .success-screen { max-width: 640px; margin: 0 auto; }
+}
+@media (min-width: 768px) {
+  .step-card { max-width: 720px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div style="display:flex;align-items:center;">
+      <div class="logo-mark">K&B</div>
+      <div class="logo-text">
+        <div class="logo-name">Kockoth & Birkhold</div>
+        <div class="logo-sub">Immobilienfinanzierungen</div>
+      </div>
+    </div>
+    <div class="header-badge">Vertraulich</div>
+  </header>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="prog-labels" id="progLabels"></div>
+    <div class="prog-track">
+      <div class="prog-fill" id="progFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Scroll Content -->
+  <div class="scroll-area" id="scrollArea">
+
+    <!-- Steps injected by JS -->
+    <div id="stepsContainer"></div>
+
+    <!-- Success -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Vielen Dank!</div>
+      <div class="success-text">
+        Ihre Selbstauskunft wurde erfolgreich übermittelt.
+        Wir melden uns innerhalb von 24 Stunden bei Ihnen.
+      </div>
+      <div class="next-steps">
+        <div class="next-steps-title">Ihre nächsten Schritte</div>
+        <div class="next-step-item">
+          <div class="step-num">1</div>
+          <span>Unterlagen zusammenstellen — Gehaltsabrechnungen, Kontoauszüge, Grundbuchauszüge</span>
+        </div>
+        <div class="next-step-item">
+          <div class="step-num">2</div>
+          <span>Wir kontaktieren Sie für ein persönliches Erstgespräch zur Finanzierungsstrategie</span>
+        </div>
+        <div class="next-step-item">
+          <div class="step-num">3</div>
+          <span>Gemeinsam entwickeln wir Ihre optimale Investorenlösung</span>
+        </div>
+      </div>
+      <p style="margin-top:24px;font-size:13px;color:var(--muted);">
+        Fragen? <a href="mailto:mandant@kockoth-immobilien.de" style="color:var(--gold);">mandant@kockoth-immobilien.de</a>
+      </p>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- Bottom Nav -->
+  <nav class="app-nav" id="appNav">
+    <button class="btn btn-ghost" id="btnBack" onclick="prevStep()">← Zurück</button>
+    <div class="nav-counter">
+      Schritt <strong id="cCur">1</strong> / <strong id="cTot">5</strong>
+    </div>
+    <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Weiter →</button>
+    <button class="btn btn-gold" id="btnSend" onclick="submitForm()" style="display:none">Absenden ✓</button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Wird gesendet…</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA STORE — persisted to localStorage
+// ════════════════════════════════════════════════════════
+const STORE_KEY = 'kb_selbstauskunft_v1';
+let D = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(D)); }
+
+// ════════════════════════════════════════════════════════
+// STEP DEFINITIONS
+// ════════════════════════════════════════════════════════
+const STEPS = [
+  {
+    id:'antragsteller', icon:'👤',
+    title:'Antragsteller',
+    sub:'Persönliche Angaben der Antragsteller',
+    label:'Antragsteller',
+    sections:[
+      { title:'Antragsteller 1', fields:[
+        { type:'row2', items:[
+          { id:'a1_anrede',   label:'Anrede',   type:'sel', req:true,  opts:['Herr','Frau','Prof. Dr.','Dr.'] },
+          { id:'a1_titel',    label:'Titel',    type:'sel', opts:['–','Dr.','Prof.','Prof. Dr.'] },
+        ]},
+        { type:'row2', items:[
+          { id:'a1_vorname',  label:'Vorname',  type:'text', req:true },
+          { id:'a1_nachname', label:'Nachname', type:'text', req:true },
+        ]},
+        { type:'row2', items:[
+          { id:'a1_telefon',  label:'Telefon',  type:'tel' },
+          { id:'a1_email',    label:'E-Mail',   type:'email', req:true },
+        ]},
+        { type:'row3', items:[
+          { id:'a1_gebdatum', label:'Geburtsdatum', type:'date', req:true },
+          { id:'a1_gebort',   label:'Geburtsort',   type:'text', req:true },
+          { id:'a1_gebl',     label:'Geburtsland',  type:'sel', opts:['Deutschland','Frankreich','Niederlande','Schweiz','Türkei','Großbritannien','Sonstiges'] },
+        ]},
+        { type:'row2', items:[
+          { id:'a1_strasse',  label:'Straße & Nr.',  type:'text', req:true },
+          { id:'a1_plzort',   label:'PLZ / Ort',     type:'text', req:true },
+        ]},
+        { type:'row3', items:[
+          { id:'a1_famstand', label:'Familienstand',    type:'sel', req:true, opts:['Verheiratet','Ledig','Getrennt lebend','Geschieden','Eingetr. Lebenspartnerschaft','Verwitwet'] },
+          { id:'a1_staat',    label:'Staatsangehörigkeit', type:'sel', req:true, opts:['Deutschland','Frankreich','Niederlande','Schweiz','Türkei','Großbritannien','Sonstiges'] },
+          { id:'a1_steuerId', label:'Steuer-ID',      type:'text' },
+        ]},
+        { type:'row2', items:[
+          { id:'a1_beschaeft',label:'Beschäftigung',  type:'sel', req:true, opts:['Angestellter','Arbeiter','Beamter','Freiberufler','Selbständiger','Rentner','Hausfrau/Hausmann','Arbeitslos'] },
+          { id:'a1_ag',       label:'Arbeitgeber',    type:'text' },
+        ]},
+        { type:'row3', items:[
+          { id:'a1_netto',    label:'Netto mtl. €',   type:'number', req:true, inputmode:'decimal' },
+          { id:'a1_vj',       label:'Einkommen Vorjahr €', type:'number', inputmode:'decimal' },
+          { id:'a1_seit',     label:'Beschäftigt seit', type:'month' },
+        ]},
+      ]},
+      { title:'Antragsteller 2 (optional)', fields:[
+        { type:'row3', items:[
+          { id:'a2_anrede',   label:'Anrede',   type:'sel', opts:['','Herr','Frau','Prof. Dr.','Dr.'] },
+          { id:'a2_vorname',  label:'Vorname',  type:'text' },
+          { id:'a2_nachname', label:'Nachname', type:'text' },
+        ]},
+        { type:'row2', items:[
+          { id:'a2_email',    label:'E-Mail',   type:'email' },
+          { id:'a2_netto',    label:'Netto mtl. €', type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row2', items:[
+          { id:'a2_beschaeft',label:'Beschäftigung', type:'sel', opts:['','Angestellter','Arbeiter','Beamter','Freiberufler','Selbständiger','Rentner','Hausfrau/Hausmann'] },
+          { id:'a2_ag',       label:'Arbeitgeber',   type:'text' },
+        ]},
+      ]},
+    ]
+  },
+  {
+    id:'haushalt', icon:'🏡',
+    title:'Haushalt',
+    sub:'Familie, Wohnsituation und Bankverbindung',
+    label:'Haushalt',
+    sections:[
+      { title:'Haushalt & Kinder', fields:[
+        { type:'row3', items:[
+          { id:'hh_erw',   label:'Erwachsene',       type:'number', inputmode:'numeric' },
+          { id:'hh_kfz',   label:'Anzahl KFZ',       type:'number', inputmode:'numeric' },
+          { id:'hh_lhk',   label:'Lebenshaltung mtl. €', type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row1', items:[
+          { id:'hh_kinder',label:'Anzahl Kinder', type:'sel', opts:['0','1','2','3','4','5+'] },
+        ]},
+        { type:'row3', items:[
+          { id:'k1_name',  label:'Kind 1 – Name',     type:'text' },
+          { id:'k1_geb',   label:'Geburtsdatum',      type:'date' },
+          { id:'k1_kg',    label:'Kindergeld',        type:'sel', opts:['','Ja','Nein'] },
+        ]},
+        { type:'row3', items:[
+          { id:'k2_name',  label:'Kind 2 – Name',     type:'text' },
+          { id:'k2_geb',   label:'Geburtsdatum',      type:'date' },
+          { id:'k2_kg',    label:'Kindergeld',        type:'sel', opts:['','Ja','Nein'] },
+        ]},
+      ]},
+      { title:'Wohnsituation', fields:[
+        { type:'row1', items:[
+          { id:'hh_wohnen',label:'Aktuelle Wohnsituation', type:'chips', req:true, opts:['Mieter','Eigentümer','Elternhaus','WG'] },
+        ]},
+        { type:'row2', items:[
+          { id:'hh_miete', label:'Kaltmiete mtl. €',  type:'number', inputmode:'decimal', hint:'Falls Mieter' },
+          { id:'hh_wohnseit', label:'Wohnhaft seit',  type:'month' },
+        ]},
+        { type:'row1', items:[
+          { id:'hh_erf',   label:'Bereits eine Immobilie finanziert?', type:'chips', opts:['Ja','Nein'] },
+        ]},
+      ]},
+      { title:'Bankverbindung', fields:[
+        { type:'row2', items:[
+          { id:'bk_inh',   label:'Kontoinhaber',      type:'text', req:true },
+          { id:'bk_inst',  label:'Kreditinstitut',    type:'text' },
+        ]},
+        { type:'row2', items:[
+          { id:'bk_iban',  label:'IBAN',              type:'text', req:true },
+          { id:'bk_bic',   label:'BIC',               type:'text' },
+        ]},
+      ]},
+    ]
+  },
+  {
+    id:'objekt', icon:'🏢',
+    title:'Finanzierungsobjekt',
+    sub:'Das zu finanzierende Objekt und Ihr Finanzierungswunsch',
+    label:'Objekt',
+    sections:[
+      { title:'Objektdaten', fields:[
+        { type:'row2', items:[
+          { id:'obj_art',  label:'Art der Immobilie', type:'sel', req:true, opts:['Eigentumswohnung','Einfamilienhaus','Doppelhaushälfte','Reihenhaus','Mehrfamilienhaus','Grundstück','Sonstiges'] },
+          { id:'obj_nutz', label:'Nutzung',           type:'sel', req:true, opts:['Eigennutzung','Kapitalanlage','Teils Eigennutzung'] },
+        ]},
+        { type:'row2', items:[
+          { id:'obj_str',  label:'Straße & Nr.',      type:'text', req:true },
+          { id:'obj_plz',  label:'PLZ / Ort',         type:'text', req:true },
+        ]},
+        { type:'row3', items:[
+          { id:'obj_bl',   label:'Bundesland',        type:'sel', opts:['Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen','Hamburg','Hessen','Mecklenburg-Vorpommern','Niedersachsen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'] },
+          { id:'obj_bj',   label:'Baujahr',           type:'number', inputmode:'numeric' },
+          { id:'obj_wfl',  label:'Wohnfläche m²',     type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row3', items:[
+          { id:'obj_aust', label:'Ausstattung',       type:'sel', opts:['','stark gehoben','gehoben','mittel','einfach'] },
+          { id:'obj_zust', label:'Zustand',           type:'sel', opts:['','sehr gut','gut','mittel','mäßig','schlecht'] },
+          { id:'obj_erb',  label:'Erbbaurecht',       type:'sel', opts:['','Nicht vorhanden','Vorhanden'] },
+        ]},
+      ]},
+      { title:'Finanzierungswunsch', fields:[
+        { type:'row2', items:[
+          { id:'fin_verw', label:'Verwendungszweck',  type:'sel', req:true, opts:['Kauf','Neubau (eigenes Bauvorhaben)','Kauf (Neubau vom Bauträger)','Modernisierung','Anschlussfinanzierung','Kapitalbeschaffung'] },
+          { id:'fin_kp',   label:'Kaufpreis €',       type:'number', req:true, inputmode:'decimal' },
+        ]},
+        { type:'row3', items:[
+          { id:'fin_darl', label:'Darlehensbetrag €', type:'number', req:true, inputmode:'decimal' },
+          { id:'fin_ek',   label:'Eigenkapital €',    type:'number', inputmode:'decimal' },
+          { id:'fin_zb',   label:'Zinsbindung J.',    type:'sel', opts:['','5','10','15','20','25','30'] },
+        ]},
+        { type:'row2', items:[
+          { id:'fin_tilg', label:'Tilgungsrate %',    type:'number', inputmode:'decimal', hint:'z.B. 2 für 2%' },
+          { id:'fin_st',   label:'Sondertilgung?',   type:'sel', opts:['','Ja','Nein'] },
+        ]},
+      ]},
+    ]
+  },
+  {
+    id:'finanzen', icon:'💶',
+    title:'Vermögen & Einnahmen',
+    sub:'Ihre finanzielle Gesamtsituation',
+    label:'Finanzen',
+    sections:[
+      { title:'Vermögen', fields:[
+        { type:'row3', items:[
+          { id:'v_bank',   label:'Bank & Sparguthaben €', type:'number', inputmode:'decimal' },
+          { id:'v_wp',     label:'Wertpapiere / Aktien €', type:'number', inputmode:'decimal' },
+          { id:'v_bsv',    label:'Bausparvertrag €',   type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row3', items:[
+          { id:'v_lv',     label:'Lebens-/Rentenvers. €', type:'number', inputmode:'decimal' },
+          { id:'v_immo',   label:'Immobilienwert €',   type:'number', inputmode:'decimal' },
+          { id:'v_sonst',  label:'Sonstiges €',        type:'number', inputmode:'decimal' },
+        ]},
+      ]},
+      { title:'Zusätzliche Einnahmen mtl.', fields:[
+        { type:'row3', items:[
+          { id:'e_neben',  label:'Nebentätigkeit €',   type:'number', inputmode:'decimal' },
+          { id:'e_miete',  label:'Mieteinnahmen €',    type:'number', inputmode:'decimal' },
+          { id:'e_kg',     label:'Kindergeld €',       type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row2', items:[
+          { id:'e_rente',  label:'Rente / Pension €',  type:'number', inputmode:'decimal' },
+          { id:'e_sonst',  label:'Sonstige €',         type:'number', inputmode:'decimal' },
+        ]},
+      ]},
+      { title:'Ausgaben mtl.', fields:[
+        { type:'row3', items:[
+          { id:'a_miete',  label:'Mietausgaben €',     type:'number', inputmode:'decimal' },
+          { id:'a_pkv',    label:'PKV €',              type:'number', inputmode:'decimal' },
+          { id:'a_uhalte', label:'Unterhalt €',        type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row2', items:[
+          { id:'a_vers',   label:'Versicherungen €',   type:'number', inputmode:'decimal' },
+          { id:'a_sonst',  label:'Sonstige Ausgaben €', type:'number', inputmode:'decimal' },
+        ]},
+      ]},
+    ]
+  },
+  {
+    id:'abschluss', icon:'📋',
+    title:'Verbindlichkeiten & Abschluss',
+    sub:'Bestehende Kredite und Ihre Einwilligung',
+    label:'Abschluss',
+    sections:[
+      { title:'Laufende Verbindlichkeiten', fields:[
+        { type:'row1', items:[
+          { id:'_info1', type:'info', text:'Bitte alle laufenden Kredite, Leasingverträge und Darlehen angeben.' }
+        ]},
+        { type:'row3', items:[
+          { id:'vb1_art',  label:'Art (1)',            type:'sel', opts:['','Ratenkredit','Leasing','Priv. Darlehen','Dispokredit','Sonstiges'] },
+          { id:'vb1_rate', label:'Rate mtl. €',        type:'number', inputmode:'decimal' },
+          { id:'vb1_rs',   label:'Restschuld €',       type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row3', items:[
+          { id:'vb2_art',  label:'Art (2)',            type:'sel', opts:['','Ratenkredit','Leasing','Priv. Darlehen','Dispokredit','Sonstiges'] },
+          { id:'vb2_rate', label:'Rate mtl. €',        type:'number', inputmode:'decimal' },
+          { id:'vb2_rs',   label:'Restschuld €',       type:'number', inputmode:'decimal' },
+        ]},
+        { type:'row3', items:[
+          { id:'vb3_art',  label:'Art (3)',            type:'sel', opts:['','Ratenkredit','Leasing','Priv. Darlehen','Dispokredit','Sonstiges'] },
+          { id:'vb3_rate', label:'Rate mtl. €',        type:'number', inputmode:'decimal' },
+          { id:'vb3_rs',   label:'Restschuld €',       type:'number', inputmode:'decimal' },
+        ]},
+      ]},
+      { title:'Datenschutz & Einwilligung', fields:[
+        { type:'row1', items:[
+          { id:'_info2', type:'info', text:'Mit dem Absenden bestätige ich, dass alle Angaben vollständig und wahrheitsgemäß sind. Ich willige ein, dass meine Daten zur Prüfung und Vermittlung von Finanzierungsanfragen an Kreditinstitute weitergegeben werden dürfen. Eine SCHUFA-Anfrage wird genehmigt.' }
+        ]},
+        { type:'row2', items:[
+          { id:'ds_ort',   label:'Ort',               type:'text', req:true },
+          { id:'ds_datum', label:'Datum',             type:'date', req:true },
+        ]},
+        { type:'row1', items:[
+          { id:'ds_name',  label:'Vor- & Nachname zur Bestätigung', type:'text', req:true },
+        ]},
+      ]},
+    ]
+  }
+];
+
+// ════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════
+let cur = 0;
+const total = STEPS.length;
+
+function buildField(f) {
+  if (f.type === 'info') {
+    return `<div class="info-box">${f.text}</div>`;
+  }
+  const val = D[f.id] || '';
+  const reqMark = f.req ? '<span class="req">*</span>' : '';
+  let input = '';
+
+  if (f.type === 'chips') {
+    const chips = f.opts.map(o =>
+      `<label class="chip ${val===o?'selected':''}">
+        <span class="chip-dot"></span>${o}
+        <input type="radio" name="${f.id}" value="${o}" ${val===o?'checked':''} style="display:none">
+      </label>`
+    ).join('');
+    input = `<div class="chip-group" data-id="${f.id}">${chips}</div>`;
+  } else if (f.type === 'sel') {
+    const opts = ['— bitte wählen —', ...(f.opts||[])].map((o,i) =>
+      `<option value="${i===0?'':o}" ${val===o&&i>0?'selected':''}>${o}</option>`
+    ).join('');
+    input = `<select id="${f.id}" data-id="${f.id}" class="${f.req&&!val?'':''}">
+      ${opts}</select>`;
+  } else {
+    input = `<input id="${f.id}" type="${f.type||'text'}" data-id="${f.id}"
+      inputmode="${f.inputmode||''}"
+      value="${val}"
+      placeholder="${f.hint||''}"
+      ${f.req?'required':''}>`;
+  }
+
+  return `<div class="field">
+    <div class="field-label">${f.label||''}${reqMark}</div>
+    ${input}
+    ${f.hint&&f.type!=='text'?`<div class="field-hint">${f.hint}</div>`:''}
+    <div class="field-err" id="${f.id}_err">Bitte ausfüllen</div>
+  </div>`;
+}
+
+function buildRow(row) {
+  const cls = {row1:'',row2:'field-row-2',row3:'field-row-3'}[row.type]||'';
+  if (row.items.length === 1 && row.items[0].type === 'info') {
+    return buildField(row.items[0]);
+  }
+  const inner = row.items.map(buildField).join('');
+  return cls ? `<div class="${cls}">${inner}</div>` : inner;
+}
+
+function buildStep(step) {
+  const sections = step.sections.map(sec => {
+    const fields = sec.fields.map(buildRow).join('');
+    return `<div class="section-block">
+      <div class="section-title">${sec.title}</div>
+      <div class="section-fields">${fields}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="step-card" id="step_${step.id}">
+    <div class="step-hero">
+      <div class="step-icon">${step.icon}</div>
+      <div>
+        <div class="step-title">${step.title}</div>
+        <div class="step-sub">${step.sub}</div>
+      </div>
+    </div>
+    <div class="step-body">${sections}</div>
+  </div>`;
+}
+
+function renderAll() {
+  document.getElementById('stepsContainer').innerHTML =
+    STEPS.map(buildStep).join('');
+  attachListeners();
+}
+
+function attachListeners() {
+  // Text / number / date / email / tel inputs
+  document.querySelectorAll('input[data-id], select[data-id]').forEach(el => {
+    el.addEventListener('change', () => { D[el.dataset.id] = el.value; save(); el.classList.remove('error'); });
+    el.addEventListener('input',  () => { D[el.dataset.id] = el.value; save(); el.classList.remove('error'); });
+  });
+  // Chip groups
+  document.querySelectorAll('.chip-group').forEach(group => {
+    group.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = group.dataset.id;
+        const val = chip.querySelector('input').value;
+        D[id] = val; save();
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+      });
+    });
+  });
+}
+
+function showStep(idx, dir='fwd') {
+  document.querySelectorAll('.step-card').forEach(c => {
+    c.classList.remove('active','back');
+  });
+  const card = document.getElementById('step_' + STEPS[idx].id);
+  if (dir === 'back') card.classList.add('back');
+  card.classList.add('active');
+
+  // Nav buttons
+  document.getElementById('btnBack').style.display = idx === 0 ? 'none' : '';
+  const isLast = idx === total - 1;
+  document.getElementById('btnNext').style.display = isLast ? 'none' : '';
+  document.getElementById('btnSend').style.display = isLast ? '' : 'none';
+  document.getElementById('cCur').textContent = idx + 1;
+
+  // Progress
+  updateProgress(idx);
+  document.getElementById('scrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress(idx) {
+  const pct = ((idx) / (total - 1)) * 100;
+  document.getElementById('progFill').style.width = pct + '%';
+
+  const labels = document.getElementById('progLabels');
+  labels.innerHTML = STEPS.map((s, i) =>
+    `<span class="prog-label ${i<idx?'done':i===idx?'active':''}">${s.label}</span>`
+  ).join('');
+}
+
+function validateCurrent() {
+  let ok = true;
+  const step = STEPS[cur];
+  step.sections.forEach(sec => {
+    sec.fields.forEach(row => {
+      row.items.forEach(f => {
+        if (!f.req) return;
+        const val = D[f.id];
+        const el  = document.getElementById(f.id);
+        const err = document.getElementById(f.id + '_err');
+        if (!val || String(val).trim() === '') {
+          ok = false;
+          if (el) el.classList.add('error');
+          if (err) err.style.display = 'block';
+        }
+      });
+    });
+  });
+  if (!ok) {
+    const firstErr = document.querySelector('.error, .field-err[style*="block"]');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  return ok;
+}
+
+function nextStep() {
+  if (!validateCurrent()) return;
+  if (cur < total - 1) { cur++; showStep(cur, 'fwd'); }
+}
+function prevStep() {
+  if (cur > 0) { cur--; showStep(cur, 'back'); }
+}
+
+// ════════════════════════════════════════════════════════
+// EXCEL BUILD + SEND
+// ════════════════════════════════════════════════════════
+function buildExcel() {
+  const wb = XLSX.utils.book_new();
+  const d = D;
+
+  const s1 = [
+    ['SELBSTAUSKUNFT – Kockoth & Birkhold'],
+    ['Erstellt:', new Date().toLocaleDateString('de-DE')],
+    [],
+    ['ANTRAGSTELLER 1'],
+    ['Anrede', d.a1_anrede||''], ['Vorname', d.a1_vorname||''],
+    ['Nachname', d.a1_nachname||''], ['Telefon', d.a1_telefon||''],
+    ['E-Mail', d.a1_email||''], ['Geburtsdatum', d.a1_gebdatum||''],
+    ['Geburtsort', d.a1_gebort||''], ['Geburtsland', d.a1_gebl||''],
+    ['Straße & Nr.', d.a1_strasse||''], ['PLZ / Ort', d.a1_plzort||''],
+    ['Familienstand', d.a1_famstand||''], ['Staatsangehörigkeit', d.a1_staat||''],
+    ['Steuer-ID', d.a1_steuerId||''], ['Beschäftigung', d.a1_beschaeft||''],
+    ['Arbeitgeber', d.a1_ag||''], ['Netto mtl.', d.a1_netto||''],
+    ['Einkommen Vorjahr', d.a1_vj||''], ['Beschäftigt seit', d.a1_seit||''],
+    [],
+    ['ANTRAGSTELLER 2'],
+    ['Anrede', d.a2_anrede||''], ['Vorname', d.a2_vorname||''],
+    ['Nachname', d.a2_nachname||''], ['E-Mail', d.a2_email||''],
+    ['Beschäftigung', d.a2_beschaeft||''], ['Arbeitgeber', d.a2_ag||''],
+    ['Netto mtl.', d.a2_netto||''],
+    [],
+    ['HAUSHALT'],
+    ['Erwachsene', d.hh_erw||''], ['KFZ', d.hh_kfz||''],
+    ['Lebenshaltung', d.hh_lhk||''], ['Kinder', d.hh_kinder||''],
+    ['Kind 1', d.k1_name||'', d.k1_geb||'', d.k1_kg||''],
+    ['Kind 2', d.k2_name||'', d.k2_geb||'', d.k2_kg||''],
+    ['Wohnsituation', d.hh_wohnen||''], ['Kaltmiete', d.hh_miete||''],
+    ['Wohnhaft seit', d.hh_wohnseit||''], ['Immo finanziert', d.hh_erf||''],
+    [],
+    ['BANKVERBINDUNG'],
+    ['Kontoinhaber', d.bk_inh||''], ['Institut', d.bk_inst||''],
+    ['IBAN', d.bk_iban||''], ['BIC', d.bk_bic||''],
+  ];
+
+  const s2 = [
+    ['FINANZIERUNGSOBJEKT'],
+    ['Art', d.obj_art||''], ['Nutzung', d.obj_nutz||''],
+    ['Straße & Nr.', d.obj_str||''], ['PLZ / Ort', d.obj_plz||''],
+    ['Bundesland', d.obj_bl||''], ['Baujahr', d.obj_bj||''],
+    ['Wohnfläche m²', d.obj_wfl||''], ['Ausstattung', d.obj_aust||''],
+    ['Zustand', d.obj_zust||''], ['Erbbaurecht', d.obj_erb||''],
+    [],
+    ['FINANZIERUNGSWUNSCH'],
+    ['Verwendungszweck', d.fin_verw||''], ['Kaufpreis', d.fin_kp||''],
+    ['Darlehensbetrag', d.fin_darl||''], ['Eigenkapital', d.fin_ek||''],
+    ['Zinsbindung', d.fin_zb||''], ['Tilgungsrate %', d.fin_tilg||''],
+    ['Sondertilgung', d.fin_st||''],
+    [],
+    ['VERMÖGEN'],
+    ['Bank & Sparguthaben', d.v_bank||''], ['Wertpapiere', d.v_wp||''],
+    ['Bausparvertrag', d.v_bsv||''], ['Lebens-/Rentenvers.', d.v_lv||''],
+    ['Immobilienwert', d.v_immo||''], ['Sonstiges', d.v_sonst||''],
+    [],
+    ['EINNAHMEN (mtl.)'],
+    ['Nebentätigkeit', d.e_neben||''], ['Mieteinnahmen', d.e_miete||''],
+    ['Kindergeld', d.e_kg||''], ['Rente/Pension', d.e_rente||''],
+    ['Sonstige', d.e_sonst||''],
+    [],
+    ['AUSGABEN (mtl.)'],
+    ['Mietausgaben', d.a_miete||''], ['PKV', d.a_pkv||''],
+    ['Unterhalt', d.a_uhalte||''], ['Versicherungen', d.a_vers||''],
+    ['Sonstige', d.a_sonst||''],
+    [],
+    ['VERBINDLICHKEITEN'],
+    ['Art 1', d.vb1_art||''], ['Rate 1', d.vb1_rate||''], ['Restschuld 1', d.vb1_rs||''],
+    ['Art 2', d.vb2_art||''], ['Rate 2', d.vb2_rate||''], ['Restschuld 2', d.vb2_rs||''],
+    ['Art 3', d.vb3_art||''], ['Rate 3', d.vb3_rate||''], ['Restschuld 3', d.vb3_rs||''],
+    [],
+    ['EINWILLIGUNG'],
+    ['Ort', d.ds_ort||''], ['Datum', d.ds_datum||''],
+    ['Name', d.ds_name||''],
+  ];
+
+  const ws1 = XLSX.utils.aoa_to_sheet(s1);
+  const ws2 = XLSX.utils.aoa_to_sheet(s2);
+  ws1['!cols'] = [{wch:30},{wch:42}];
+  ws2['!cols'] = [{wch:30},{wch:42}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Antragsteller_Haushalt');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Objekt_Finanzen');
+
+  return XLSX.write(wb, { bookType:'xlsx', type:'base64' });
+}
+
+async function submitForm() {
+  if (!validateCurrent()) return;
+
+  document.getElementById('loadingOverlay').classList.add('active');
+
+  const b64  = buildExcel();
+  const name = ((D.a1_vorname||'') + ' ' + (D.a1_nachname||'')).trim();
+  const date = new Date().toLocaleDateString('de-DE');
+  const fname = `Selbstauskunft_${(D.a1_nachname||'Mandant').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+
+  try {
+    const res = await fetch('/api/submit-selbstauskunft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mandant_name:  name,
+        mandant_email: D.a1_email || '',
+        datum:         date,
+        excel_base64:  b64,
+        filename:      fname
+      })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(()=>({}))).message || 'Serverfehler');
+
+    // Clear stored data after successful send
+    localStorage.removeItem(STORE_KEY);
+    showSuccess();
+  } catch(e) {
+    document.getElementById('loadingOverlay').classList.remove('active');
+    alert('Fehler: ' + e.message + '\n\nBitte versuchen Sie es erneut oder kontaktieren Sie uns direkt.');
+  }
+}
+
+function showSuccess() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+  document.getElementById('stepsContainer').style.display = 'none';
+  document.getElementById('successScreen').classList.add('active');
+  document.getElementById('appNav').style.display = 'none';
+  document.querySelector('.progress-wrap').style.display = 'none';
+  document.getElementById('scrollArea').scrollTo({ top: 0 });
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+document.getElementById('cTot').textContent = total;
+renderAll();
+showStep(0);
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
